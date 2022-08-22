@@ -11,16 +11,16 @@ import { EthRecordObservable } from './EthRecordObservable';
 
 function getRecipientTypeScript(): IndexerScript {
   return {
-    code_hash: ForceBridgeCore.config.ckb.deps.recipientType.script.codeHash,
-    hash_type: ForceBridgeCore.config.ckb.deps.recipientType.script.hashType,
+    codeHash: ForceBridgeCore.config.ckb.deps.recipientType.script.codeHash,
+    hashType: ForceBridgeCore.config.ckb.deps.recipientType.script.hashType,
     args: '0x',
   };
 }
 
 function getBridgeLockscript(): IndexerScript {
   return {
-    code_hash: ForceBridgeCore.config.ckb.deps.bridgeLock.script.codeHash,
-    hash_type: ForceBridgeCore.config.ckb.deps.bridgeLock.script.hashType,
+    codeHash: ForceBridgeCore.config.ckb.deps.bridgeLock.script.codeHash,
+    hashType: ForceBridgeCore.config.ckb.deps.bridgeLock.script.hashType,
     args: '0x',
   };
 }

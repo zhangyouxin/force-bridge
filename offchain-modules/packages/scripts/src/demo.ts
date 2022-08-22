@@ -137,16 +137,16 @@ mint tx
     - bridge cell
         - lock
             - args: ARGS
-            - code_hash: lockscriptCodeHash
-            - hash_type: data
+            - codeHash: lockscriptCodeHash
+            - hashType: data
 - outputs
     - sudt cell
         - lock
             - user_lockscript
         - type
             - args: bridgeCellLockscriptHash
-            - code_hash: sudtCodeHash
-            - hash_type: 'type'
+            - codeHash: sudtCodeHash
+            - hashType: 'type'
 - outputsData
     - amount
 - witness

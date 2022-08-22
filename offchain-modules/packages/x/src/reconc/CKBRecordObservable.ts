@@ -1,4 +1,4 @@
-import { core } from '@ckb-lumos/base';
+import { blockchain } from '@ckb-lumos/base';
 import { CKBIndexerClient, SearchKey, SearchKeyFilter } from '@force-bridge/ckb-indexer-client';
 import type * as Indexer from '@force-bridge/ckb-indexer-client';
 import { CkbBurnRecord, CkbMintRecord } from '@force-bridge/reconc';
@@ -51,25 +51,25 @@ export class CKBRecordObservable {
 
   observeMintRecord(filter: CKBMintFilter): Observable<CkbMintRecord> {
     const { rpc, indexer: indexer, ownerCellTypeHash, bridgeLock } = this.provider;
-    const blockRange: SearchKeyFilter['block_range'] = [
+    const blockRange: SearchKeyFilter['blockRange'] = [
       filter.fromBlock ? filter.fromBlock : '0x0',
       filter.toBlock ? filter.toBlock : '0xffffffffffffffff', // u64::Max
     ];
 
     const searchKey: SearchKey = {
-      filter: { block_range: blockRange },
+      filter: { blockRange: blockRange },
       script: bridgeLock.toIndexerScript(),
-      script_type: 'lock',
+      scriptType: 'lock',
     };
 
-    const observable = from(indexer.get_transactions({ searchKey })).pipe(
-      expand((res) => indexer.get_transactions({ searchKey, cursor: res.last_cursor })),
+    const observable = from(indexer.getTransactions({ searchKey })).pipe(
+      expand((res) => indexer.getTransactions({ searchKey, cursor: res.last_cursor })),
       takeWhile((res) => res.objects.length > 0),
       mergeMap((res) => res.objects),
       rxFilter((getTxResult: Indexer.GetTransactionsResult) => getTxResult.io_type === 'output'),
-      distinct((res) => res.tx_hash),
+      distinct((res) => res.txHash),
       mergeMap(async (getTxResult) => {
-        const tx = await rpc.getTransaction(getTxResult.tx_hash);
+        const tx = await rpc.getTransaction(getTxResult.txHash);
         return { tx, getTxResult };
       }, 20),
       rxFilter((res) => {
@@ -95,8 +95,8 @@ export class CKBRecordObservable {
       mergeMap((res) => {
         try {
           const tx = res.tx;
-          const witnessArgs = new core.WitnessArgs(fromHexString(tx.transaction.witnesses[0]).buffer);
-          const inputTypeWitness = witnessArgs.getInputType().value().raw();
+          const witnessArgs = blockchain.WitnessArgs.unpack(fromHexString(tx.transaction.witnesses[0]).buffer);
+          const inputTypeWitness = witnessArgs.inputType;
           const witness = new MintWitness(inputTypeWitness, { validate: true });
           // 1 mintTx : 1 lockTxHash
           // 1 sudtOutput : 1 lockTxHash
@@ -123,7 +123,7 @@ export class CKBRecordObservable {
 
             const recipient = this.provider.scriptToAddress(ScriptLike.from(cell.lock));
             const blockHash = tx.txStatus.blockHash || '';
-            const blockNumber = parseInt(res.getTxResult.block_number, 16);
+            const blockNumber = parseInt(res.getTxResult.blockNumber, 16);
             const record: CkbMintRecord = { amount, fromTxId, txId, fee, recipient, blockHash, blockNumber };
             return records.concat(record);
           }, [] as CkbMintRecord[]);
@@ -137,15 +137,15 @@ export class CKBRecordObservable {
   }
 
   observeBurnRecord(filter: CKBBurnFilter): Observable<CkbBurnRecord> {
-    const blockRange: SearchKeyFilter['block_range'] = [
+    const blockRange: SearchKeyFilter['blockRange'] = [
       filter.fromBlock ? filter.fromBlock : '0x0',
       filter.toBlock ? filter.toBlock : '0xffffffffffffffff', // u64::Max
     ];
 
     const searchKey: SearchKey = {
-      script_type: 'type',
+      scriptType: 'type',
       script: this.provider.recipientType.toIndexerScript(),
-      filter: { block_range: blockRange, script: filter.sender ? filter.sender.toIndexerScript() : undefined },
+      filter: { blockRange: blockRange, script: filter.sender ? filter.sender.toIndexerScript() : undefined },
     };
 
     const { rpc, indexer } = this.provider;
@@ -155,7 +155,7 @@ export class CKBRecordObservable {
       (txs$: Observable<Indexer.IndexerIterableResult<Indexer.GetTransactionsResult>>): Observable<CkbBurnRecord> => {
         return txs$.pipe(
           mergeMap((txs) => txs.objects.filter((indexerTx) => indexerTx.io_type === 'output')),
-          mergeMap((tx) => rpc.getTransaction(tx.tx_hash), 20),
+          mergeMap((tx) => rpc.getTransaction(tx.txHash), 20),
           map((tx) => {
             const recipientCellData = new RecipientCellData(fromHexString(tx.transaction.outputsData[0]).buffer);
             return { recipientCellData, txId: tx.transaction.hash };
@@ -204,8 +204,8 @@ export class CKBRecordObservable {
         );
       };
 
-    return from(indexer.get_transactions({ searchKey })).pipe(
-      expand((tx) => indexer.get_transactions({ searchKey, cursor: tx.last_cursor })),
+    return from(indexer.getTransactions({ searchKey })).pipe(
+      expand((tx) => indexer.getTransactions({ searchKey, cursor: tx.last_cursor })),
       takeWhile((tx) => tx.objects.length > 0),
       indexerTx2FromRecord(),
     );

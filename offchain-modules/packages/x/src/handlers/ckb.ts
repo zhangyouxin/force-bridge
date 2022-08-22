@@ -1,9 +1,8 @@
-import { core, utils } from '@ckb-lumos/base';
+import { utils, blockchain } from '@ckb-lumos/base';
 import { serializeMultisigScript } from '@ckb-lumos/common-scripts/lib/secp256k1_blake160_multisig';
 import { key } from '@ckb-lumos/hd';
 import { encodeToAddress, sealTransaction, TransactionSkeletonType } from '@ckb-lumos/helpers';
 import { RPC } from '@ckb-lumos/rpc';
-import { Reader } from 'ckb-js-toolkit';
 import * as lodash from 'lodash';
 import { BtcAsset, ChainType, EosAsset, EthAsset, getAsset, TronAsset } from '../ckb/model/asset';
 import { RecipientCellData } from '../ckb/tx-helper/generated/eth_recipient_cell';
@@ -219,10 +218,10 @@ export class CkbHandler {
   }
 
   async getTransactions(searchKey: SearchKey): Promise<CkbTxInfo[]> {
-    const txs = lodash.uniqBy(await this.ckbIndexer.getTransactions(searchKey), 'tx_hash');
+    const txs = lodash.uniqBy(await this.ckbIndexer.getTransactions(searchKey), 'txHash');
     const result: CkbTxInfo[] = [];
     for (const tx of txs) {
-      const txWithStatus = await this.ckb.rpc.getTransaction(tx.tx_hash);
+      const txWithStatus = await this.ckb.rpc.getTransaction(tx.txHash);
       result.push({
         info: tx,
         tx: txWithStatus,
@@ -233,35 +232,35 @@ export class CkbHandler {
 
   async handleTxs(fromBlockNum: number, toBlockNum: number, currentHeight: number): Promise<void> {
     const mintSearchKey: SearchKey = {
-      filter: { block_range: ['0x' + fromBlockNum.toString(16), '0x' + (toBlockNum + 1).toString(16)] },
+      filter: { blockRange: ['0x' + fromBlockNum.toString(16), '0x' + (toBlockNum + 1).toString(16)] },
       script: {
-        code_hash: ForceBridgeCore.config.ckb.deps.bridgeLock.script.codeHash,
-        hash_type: ForceBridgeCore.config.ckb.deps.bridgeLock.script.hashType,
+        codeHash: ForceBridgeCore.config.ckb.deps.bridgeLock.script.codeHash,
+        hashType: ForceBridgeCore.config.ckb.deps.bridgeLock.script.hashType,
         args: '0x',
       },
-      script_type: ScriptType.lock,
+      scriptType: ScriptType.lock,
     };
     const burnSearchKey: SearchKey = {
-      filter: { block_range: ['0x' + fromBlockNum.toString(16), '0x' + (toBlockNum + 1).toString(16)] },
+      filter: { blockRange: ['0x' + fromBlockNum.toString(16), '0x' + (toBlockNum + 1).toString(16)] },
       script: {
-        code_hash: ForceBridgeCore.config.ckb.deps.recipientType.script.codeHash,
-        hash_type: ForceBridgeCore.config.ckb.deps.recipientType.script.hashType,
+        codeHash: ForceBridgeCore.config.ckb.deps.recipientType.script.codeHash,
+        hashType: ForceBridgeCore.config.ckb.deps.recipientType.script.hashType,
         args: '0x',
       },
-      script_type: ScriptType.type,
+      scriptType: ScriptType.type,
     };
     const mintTxs = await this.getTransactions(mintSearchKey);
     const burnTxs = await this.getTransactions(burnSearchKey);
     logger.info(
       `CkbHandler onBlock handle logs from ${fromBlockNum} to ${toBlockNum}, mint txs: ${JSON.stringify(
-        mintTxs.map((tx) => tx.info.tx_hash),
-      )}, burn txs: ${JSON.stringify(burnTxs.map((tx) => tx.info.tx_hash))}`,
+        mintTxs.map((tx) => tx.info.txHash),
+      )}, burn txs: ${JSON.stringify(burnTxs.map((tx) => tx.info.txHash))}`,
     );
 
     for (const tx of mintTxs) {
-      const parsedMintRecords = await this.parseMintTx(tx.tx.transaction, Number(tx.info.block_number));
+      const parsedMintRecords = await this.parseMintTx(tx.tx.transaction, Number(tx.info.blockNumber));
       if (parsedMintRecords) {
-        await this.onMintTx(Number(tx.info.block_number), parsedMintRecords);
+        await this.onMintTx(Number(tx.info.blockNumber), parsedMintRecords);
         BridgeMetricSingleton.getInstance(this.role).addBridgeTxMetrics('ckb_mint', 'success');
       }
     }
@@ -281,13 +280,13 @@ export class CkbHandler {
 
   async onBurnTx(txInfo: CkbTxInfo, currentHeight: number): Promise<void> {
     const tx = txInfo.tx.transaction;
-    const txHash = txInfo.info.tx_hash;
+    const txHash = txInfo.info.txHash;
     const records = await this.db.getCkbBurnByTxHashes([txHash]);
     if (records.length > 1) {
       logger.error('unexpected db find error', records);
       throw new Error(`unexpected db find error, records.length = ${records.length}`);
     }
-    const blockNumber = Number(txInfo.info.block_number);
+    const blockNumber = Number(txInfo.info.blockNumber);
     const confirmedNumber = currentHeight - blockNumber;
     const confirmed = confirmedNumber >= ForceBridgeCore.config.ckb.confirmNumber;
     const confirmStatus = confirmed ? 'confirmed' : 'unconfirmed';
@@ -303,8 +302,8 @@ export class CkbHandler {
       const burnPreviousTx: TransactionWithStatus = await this.ckb.rpc.getTransaction(previousOutput.txHash);
       const senderLockscript = burnPreviousTx.transaction.outputs[Number(previousOutput.index)].lock;
       const senderAddress = encodeToAddress({
-        code_hash: senderLockscript.codeHash,
-        hash_type: senderLockscript.hashType,
+        codeHash: senderLockscript.codeHash,
+        hashType: senderLockscript.hashType,
         args: senderLockscript.args,
       });
       const data: BurnDbData = {
@@ -321,7 +320,7 @@ export class CkbHandler {
         chain,
         amount: utils.readBigUInt128LE(`0x${toHexString(new Uint8Array(data.cellData.getAmount().raw()))}`).toString(),
         recipientAddress: uint8ArrayToString(new Uint8Array(data.cellData.getRecipientAddress().raw())),
-        blockNumber: Number(txInfo.info.block_number),
+        blockNumber: Number(txInfo.info.blockNumber),
         confirmNumber: confirmedNumber,
         confirmStatus,
       };
@@ -402,8 +401,8 @@ export class CkbHandler {
     });
     if (0 === mintedSudtCellIndexes.length) return null;
 
-    const witnessArgs = new core.WitnessArgs(new Reader(tx.witnesses[0]));
-    const inputTypeWitness = witnessArgs.getInputType().value().raw();
+    const witnessArgs = blockchain.WitnessArgs.unpack(tx.witnesses[0]);
+    const inputTypeWitness = witnessArgs.inputType;
     const mintWitness = new MintWitness(inputTypeWitness, { validate: true });
     const lockTxHashes = mintWitness.getLockTxHashes();
     const parsedResult: MintedRecord[] = [];
@@ -539,7 +538,7 @@ export class CkbHandler {
 
         logger.debug(`txSkeleton: ${transactionSkeletonToJSON(txSkeleton)}`);
         const tx = sealTransaction(txSkeleton, [content0, content1]);
-        const mintTxHash = await this.rpc.send_transaction(tx, 'passthrough');
+        const mintTxHash = await this.rpc.sendTransaction(tx, 'passthrough');
         logger.info(
           `CkbHandler doHandleMintRecords Mint Transaction has been sent, ckbTxHash ${mintTxHash}, mintIds:${mintIds}`,
         );
@@ -656,14 +655,14 @@ export class CkbHandler {
 
       logger.debug('CkbHandler filterNewTokens record:', record);
       const bridgeCellLockscript = {
-        code_hash: ForceBridgeCore.config.ckb.deps.bridgeLock.script.codeHash,
-        hash_type: ForceBridgeCore.config.ckb.deps.bridgeLock.script.hashType,
+        codeHash: ForceBridgeCore.config.ckb.deps.bridgeLock.script.codeHash,
+        hashType: ForceBridgeCore.config.ckb.deps.bridgeLock.script.hashType,
         args: record.asset.toBridgeLockscriptArgs(),
       };
       logger.debug('CkbHandler filterNewTokens bridgeCellLockscript ', bridgeCellLockscript);
       const searchKey = {
         script: bridgeCellLockscript,
-        script_type: ScriptType.lock,
+        scriptType: ScriptType.lock,
       };
       const bridgeCells = await this.ckbIndexer.getCells(searchKey);
       if (bridgeCells.length == 0) {
@@ -681,9 +680,9 @@ export class CkbHandler {
         asset: r.asset.getAddress(),
       });
       return {
-        code_hash: ForceBridgeCore.config.ckb.deps.bridgeLock.script.codeHash,
+        codeHash: ForceBridgeCore.config.ckb.deps.bridgeLock.script.codeHash,
         args: r.asset.toBridgeLockscriptArgs(),
-        hash_type: ForceBridgeCore.config.ckb.deps.bridgeLock.script.hashType,
+        hashType: ForceBridgeCore.config.ckb.deps.bridgeLock.script.hashType,
       };
     });
 
@@ -709,7 +708,7 @@ export class CkbHandler {
 
     const tx = sealTransaction(txSkeleton, [content0, content1]);
     logger.info(`tx: ${JSON.stringify(tx)}`);
-    const txHash = await this.rpc.send_transaction(tx, 'passthrough');
+    const txHash = await this.rpc.sendTransaction(tx, 'passthrough');
     const txStatus = await this.waitUntilCommitted(txHash, 120);
     if (txStatus === null || txStatus.txStatus.status !== 'committed') {
       throw new Error('fail to createBridgeCell');

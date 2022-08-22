@@ -116,8 +116,8 @@ async function main() {
     const account = new Account(PRI_KEY);
     const multisigLockScript = getMultisigLock(ForceBridgeCore.config.ckb.multisigScript);
     const ownLockHash = ckb.utils.scriptToHash(<CKBComponents.Script>{
-      codeHash: multisigLockScript.code_hash,
-      hashType: multisigLockScript.hash_type,
+      codeHash: multisigLockScript.codeHash,
+      hashType: multisigLockScript.hashType,
       args: multisigLockScript.args,
     });
     const asset = new TronAsset(assetName, ownLockHash);
@@ -188,8 +188,8 @@ async function main() {
       const account = new Account(PRI_KEY);
       const multisigLockScript = getMultisigLock(ForceBridgeCore.config.ckb.multisigScript);
       const ownLockHash = ckb.utils.scriptToHash(<CKBComponents.Script>{
-        codeHash: multisigLockScript.code_hash,
-        hashType: multisigLockScript.hash_type,
+        codeHash: multisigLockScript.codeHash,
+        hashType: multisigLockScript.hashType,
         args: multisigLockScript.args,
       });
       const generator = new CkbTxGenerator(ckb, indexer);

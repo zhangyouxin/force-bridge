@@ -33,7 +33,7 @@ export class EthDb implements IQuery {
   }
 
   async getLatestHeight(): Promise<number> {
-    const rawRes = await this.connection.manager.query('select max(block_number) as max_block_number from eth_lock');
+    const rawRes = await this.connection.manager.query('select max(blockNumber) as max_block_number from eth_lock');
     return rawRes[0].max_block_number || ForceBridgeCore.config.eth.startBlockHeight;
   }
 
@@ -154,7 +154,7 @@ export class EthDb implements IQuery {
         eth.recipient as recipient, 
         eth.amount as lock_amount,
         ckb.amount as mint_amount,
-        eth.tx_hash as lock_hash,
+        eth.txHash as lock_hash,
         ckb.mint_hash as mint_hash,
         eth.updated_at as lock_time, 
         eth.confirm_number as lock_confirm_number,
@@ -212,7 +212,7 @@ export class EthDb implements IQuery {
         eth.recipient as recipient, 
         eth.amount as lock_amount,
         ckb.amount as mint_amount,
-        eth.tx_hash as lock_hash,
+        eth.txHash as lock_hash,
         ckb.mint_hash as mint_hash,
         eth.updated_at as lock_time, 
         eth.confirm_number as lock_confirm_number,

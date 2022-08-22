@@ -72,18 +72,18 @@ async function main() {
   const ownerTypeHash = getOwnerTypeHash();
   const asset = new EthAsset('0x0000000000000000000000000000000000000000', ownerTypeHash);
   const bridgeCellLockscript = {
-    code_hash: ForceBridgeCore.config.ckb.deps.bridgeLock.script.codeHash,
-    hash_type: ForceBridgeCore.config.ckb.deps.bridgeLock.script.hashType,
+    codeHash: ForceBridgeCore.config.ckb.deps.bridgeLock.script.codeHash,
+    hashType: ForceBridgeCore.config.ckb.deps.bridgeLock.script.hashType,
     args: asset.toBridgeLockscriptArgs(),
   };
   const sudtArgs = ckb.utils.scriptToHash(<CKBComponents.Script>{
-    codeHash: bridgeCellLockscript.code_hash,
-    hashType: bridgeCellLockscript.hash_type,
+    codeHash: bridgeCellLockscript.codeHash,
+    hashType: bridgeCellLockscript.hashType,
     args: bridgeCellLockscript.args,
   });
   const sudtType = {
-    code_hash: ForceBridgeCore.config.ckb.deps.sudtType.script.codeHash,
-    hash_type: ForceBridgeCore.config.ckb.deps.sudtType.script.hashType,
+    codeHash: ForceBridgeCore.config.ckb.deps.sudtType.script.codeHash,
+    hashType: ForceBridgeCore.config.ckb.deps.sudtType.script.hashType,
     args: sudtArgs,
   };
   const recipientBalanceBefore = await collector.getSUDTBalance(sudtType, recipientFromLockscript);

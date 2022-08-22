@@ -9,10 +9,10 @@ type FailedJSONRPCResponse = { jsonrpc: string; id: HexNum; error: { message: st
 export type JSONRPCResponse<T> = SucceedJSONRPCResponse<T> | FailedJSONRPCResponse;
 
 export type GetTransactionsResult = {
-  block_number: HexNum;
+  blockNumber: HexNum;
   io_index: HexNum;
   io_type: IOType;
-  tx_hash: Bytes32;
+  txHash: Bytes32;
   tx_index: HexNum;
 };
 
@@ -24,9 +24,9 @@ export type IndexerIterableResult<T> = {
 type ScriptType = 'lock' | 'type';
 type ScriptHashType = 'type' | 'data' | 'data1';
 export type Script = {
-  code_hash: Bytes32;
+  codeHash: Bytes32;
   args: string;
-  hash_type: ScriptHashType;
+  hashType: ScriptHashType;
 };
 
 type Uint64 = string;
@@ -34,14 +34,14 @@ type BlockNumber = string;
 
 export type SearchKeyFilter = {
   script?: Script;
-  output_data_len_range?: [Uint64, Uint64];
-  output_capacity_range?: [Uint64, Uint64];
-  block_range?: [BlockNumber, BlockNumber];
+  outputDataLenRange?: [Uint64, Uint64];
+  outputCapacityRange?: [Uint64, Uint64];
+  blockRange?: [BlockNumber, BlockNumber];
 };
 
 export type SearchKey = {
   script: Script;
-  script_type: ScriptType;
+  scriptType: ScriptType;
   filter?: SearchKeyFilter;
 };
 
@@ -80,9 +80,9 @@ export class CKBIndexerClient {
     return res.data.result;
   }
 
-  get_transactions(params: GetTransactionParams): Promise<IndexerIterableResult<GetTransactionsResult>> {
+  getTransactions(params: GetTransactionParams): Promise<IndexerIterableResult<GetTransactionsResult>> {
     return this.request({
-      method: 'get_transactions',
+      method: 'getTransactions',
       params: [params.searchKey, params.order || 'asc', params.limit || '0x64', params.cursor || null],
     });
   }

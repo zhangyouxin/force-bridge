@@ -30,12 +30,12 @@ export type HexadecimalRange = [Hexadecimal, Hexadecimal];
 
 export interface SearchKey {
   script: Script;
-  script_type: ScriptType;
+  scriptType: ScriptType;
   filter?: {
     script?: Script;
-    output_data_len_range?: HexadecimalRange;
-    output_capacity_range?: HexadecimalRange;
-    block_range?: HexadecimalRange;
+    outputDataLenRange?: HexadecimalRange;
+    outputCapacityRange?: HexadecimalRange;
+    blockRange?: HexadecimalRange;
   };
 }
 
@@ -45,8 +45,8 @@ export interface GetLiveCellsResult {
 }
 
 export interface IndexerCell {
-  block_number: Hexadecimal;
-  out_point: OutPoint;
+  blockNumber: Hexadecimal;
+  outPoint: OutPoint;
   output: {
     capacity: HexNumber;
     lock: Script;
@@ -71,10 +71,10 @@ export type HexNum = string;
 export type IOType = 'input' | 'output';
 export type Bytes32 = string;
 export type GetTransactionsResult = {
-  block_number: HexNum;
+  blockNumber: HexNum;
   io_index: HexNum;
   io_type: IOType;
-  tx_hash: Bytes32;
+  txHash: Bytes32;
   tx_index: HexNum;
 };
 export interface GetTransactionsResults {
@@ -94,16 +94,16 @@ export class CkbIndexer implements Indexer {
   }
 
   async tip(): Promise<Tip> {
-    const res = await this.request('get_tip');
+    const res = await this.request('getTip');
     return res as Tip;
   }
 
   async waitForSync(blockDifference = 0): Promise<void> {
-    const rpcTipNumber = parseInt((await this.getCkbRpc().get_tip_header()).number, 16);
+    const rpcTipNumber = parseInt((await this.getCkbRpc().getTipHeader()).number, 16);
     logger.debug('rpcTipNumber', rpcTipNumber);
     let index = 0;
     while (true) {
-      const indexerTipNumber = parseInt((await this.tip()).block_number, 16);
+      const indexerTipNumber = parseInt((await this.tip()).blockNumber, 16);
       logger.debug('indexerTipNumber', indexerTipNumber);
       if (indexerTipNumber + blockDifference >= rpcTipNumber) {
         return;
@@ -123,7 +123,7 @@ export class CkbIndexer implements Indexer {
     if (lock !== undefined) {
       searchKey = {
         script: lock as Script,
-        script_type: ScriptType.lock,
+        scriptType: ScriptType.lock,
       };
       if (type != undefined && type !== 'empty') {
         searchKey.filter = {
@@ -134,7 +134,7 @@ export class CkbIndexer implements Indexer {
       if (type != undefined && type != 'empty') {
         searchKey = {
           script: type as Script,
-          script_type: ScriptType.type,
+          scriptType: ScriptType.type,
         };
       } else {
         throw new Error(
@@ -154,17 +154,17 @@ export class CkbIndexer implements Indexer {
             let cursor = null;
             for (;;) {
               const params = [searchKey, order, `0x${sizeLimit.toString(16)}`, cursor];
-              logger.debug('get_cells params', params);
-              const res = await request('get_cells', params, ckbIndexerUrl);
+              logger.debug('getCells params', params);
+              const res = await request('getCells', params, ckbIndexerUrl);
               const liveCells = res.objects;
               cursor = res.last_cursor;
               for (const cell of liveCells) {
                 if (queryData === 'any' || queryData === cell.output_data) {
                   yield {
-                    cell_output: cell.output,
+                    cellOutput: cell.output,
                     data: cell.output_data,
-                    out_point: cell.out_point,
-                    block_number: cell.block_number,
+                    outPoint: cell.outPoint,
+                    blockNumber: cell.blockNumber,
                   };
                 }
               }
@@ -196,16 +196,16 @@ export class CkbIndexer implements Indexer {
     return res.data.result;
   }
 
-  /* get_cells example
+  /* getCells example
 
 search_key:
     script - Script
     scrip_type - enum, lock | type
     filter - filter cells by following conditions, all conditions are optional
         script: if search script type is lock, filter cells by type script prefix, and vice versa
-        output_data_len_range: [u64; 2], filter cells by output data len range, [inclusive, exclusive]
-        output_capacity_range: [u64; 2], filter cells by output capacity range, [inclusive, exclusive]
-        block_range: [u64; 2], filter cells by block number range, [inclusive, exclusive]
+        outputDataLenRange: [u64; 2], filter cells by output data len range, [inclusive, exclusive]
+        outputCapacityRange: [u64; 2], filter cells by output capacity range, [inclusive, exclusive]
+        blockRange: [u64; 2], filter cells by block number range, [inclusive, exclusive]
 order: enum, asc | desc
 limit: result size limit
 after_cursor: pagination parameter, optional
@@ -213,22 +213,22 @@ after_cursor: pagination parameter, optional
 $ echo '{
   "id": 2,
   "jsonrpc": "2.0",
-  "method": "get_cells",
+  "method": "getCells",
   "params": [
       {
           "filter": {
             "script": {
-              "code_hash": "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8",
-              "hash_type": "type",
+              "codeHash": "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8",
+              "hashType": "type",
               "args": "0x838e79dcef9cbf819a32778c8cfcc81bb2555561"
             }
           },
           "script": {
-            "code_hash": "0xc5e5dcf215925f7ef4dfaf5f4b4f105bc321c02776d6e7d52a1db3fcd9d011a4",
-            "hash_type": "type",
+            "codeHash": "0xc5e5dcf215925f7ef4dfaf5f4b4f105bc321c02776d6e7d52a1db3fcd9d011a4",
+            "hashType": "type",
             "args": "0x4580e3fd3a6623eb26f229239286cee63e18bcafb38bc6c5d0de5a8c587647c2"
           },
-          "script_type": "type"
+          "scriptType": "type"
       },
       "asc",
       "0x1"
@@ -241,22 +241,22 @@ $ echo '{
     "last_cursor": "0x60c5e5dcf215925f7ef4dfaf5f4b4f105bc321c02776d6e7d52a1db3fcd9d011a4014580e3fd3a6623eb26f229239286cee63e18bcafb38bc6c5d0de5a8c587647c200000000001ad3100000000200000004",
     "objects": [
       {
-        "block_number": "0x1ad310",
-        "out_point": {
+        "blockNumber": "0x1ad310",
+        "outPoint": {
           "index": "0x4",
-          "tx_hash": "0x6d24e50d5b46fca3f48283664453bc061744b34e03159571de4893b9640b14d5"
+          "txHash": "0x6d24e50d5b46fca3f48283664453bc061744b34e03159571de4893b9640b14d5"
         },
         "output": {
           "capacity": "0x6fc23ac00",
           "lock": {
             "args": "0x838e79dcef9cbf819a32778c8cfcc81bb2555561",
-            "code_hash": "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8",
-            "hash_type": "type"
+            "codeHash": "0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8",
+            "hashType": "type"
           },
           "type": {
             "args": "0x4580e3fd3a6623eb26f229239286cee63e18bcafb38bc6c5d0de5a8c587647c2",
-            "code_hash": "0xc5e5dcf215925f7ef4dfaf5f4b4f105bc321c02776d6e7d52a1db3fcd9d011a4",
-            "hash_type": "type"
+            "codeHash": "0xc5e5dcf215925f7ef4dfaf5f4b4f105bc321c02776d6e7d52a1db3fcd9d011a4",
+            "hashType": "type"
           }
         },
         "output_data": "0x01000000000000000000000000000000",
@@ -278,16 +278,16 @@ $ echo '{
     const index = 0;
     while (true) {
       const params = [searchKey, order, `0x${sizeLimit.toString(16)}`, cursor];
-      const res: GetLiveCellsResult = await this.request('get_cells', params);
+      const res: GetLiveCellsResult = await this.request('getCells', params);
       const liveCells = res.objects;
       cursor = res.last_cursor;
       logger.debug('liveCells', liveCells[liveCells.length - 1]);
       for (const liveCell of liveCells) {
         const cell: Cell = {
-          cell_output: liveCell.output,
+          cellOutput: liveCell.output,
           data: liveCell.output_data,
-          out_point: liveCell.out_point,
-          block_number: liveCell.block_number,
+          outPoint: liveCell.outPoint,
+          blockNumber: liveCell.blockNumber,
         };
         const { stop, push } = terminator(index, cell);
         if (push) {
@@ -313,7 +313,7 @@ $ echo '{
     let cursor: string | undefined;
     for (;;) {
       const params = [searchKey, order, `0x${sizeLimit.toString(16)}`, cursor];
-      const res: GetTransactionsResults = await this.request('get_transactions', params);
+      const res: GetTransactionsResults = await this.request('getTransactions', params);
       const txs = res.objects;
       cursor = res.last_cursor;
       infos = infos.concat(txs);

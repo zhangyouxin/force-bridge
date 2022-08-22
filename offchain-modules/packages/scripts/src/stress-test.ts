@@ -44,7 +44,7 @@ async function main() {
         'content-type': 'application/json',
       },
       body: JSON.stringify(jsonRPCRequest),
-      id: 1,
+      // id: 1,
     }).then((response) => {
       if (response.status === 200) {
         // Use client.receive when you received a JSON-RPC response.

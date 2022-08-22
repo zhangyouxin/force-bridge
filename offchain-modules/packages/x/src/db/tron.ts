@@ -47,7 +47,7 @@ export class TronDb implements IQuery {
     return await this.connection
       .getRepository(CkbMint)
       .createQueryBuilder('ckb')
-      .innerJoinAndSelect('tron_lock', 'tron', 'tron.tx_hash = ckb.id')
+      .innerJoinAndSelect('tron_lock', 'tron', 'tron.txHash = ckb.id')
       .where('ckb.recipient_lockscript = :recipient AND ckb.asset = :asset', {
         recipient: ckbRecipientAddr,
         asset: XChainAsset,
@@ -58,7 +58,7 @@ export class TronDb implements IQuery {
         ckb.recipient_lockscript as recipient , 
         tron.amount as lock_amount,
         ckb.amount as mint_amount,
-        tron.tx_hash as lock_hash,
+        tron.txHash as lock_hash,
         ckb.mint_hash as mint_hash,
         tron.updated_at as lock_time, 
         ckb.updated_at as mint_time,
@@ -103,7 +103,7 @@ export class TronDb implements IQuery {
     return await this.connection
       .getRepository(CkbMint)
       .createQueryBuilder('ckb')
-      .innerJoinAndSelect('tron_lock', 'tron', 'tron.tx_hash = ckb.id')
+      .innerJoinAndSelect('tron_lock', 'tron', 'tron.txHash = ckb.id')
       .where('tron.sender = :sender AND ckb.asset = :asset', { sender: XChainSender, asset: XChainAsset })
       .select(
         `
@@ -111,7 +111,7 @@ export class TronDb implements IQuery {
         ckb.recipient_lockscript as recipient , 
         tron.amount as lock_amount,
         ckb.amount as mint_amount,
-        tron.tx_hash as lock_hash,
+        tron.txHash as lock_hash,
         ckb.mint_hash as mint_hash,
         tron.updated_at as lock_time, 
         ckb.updated_at as mint_time,

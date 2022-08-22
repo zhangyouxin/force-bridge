@@ -1,9 +1,9 @@
 import { Script as PWScript, HashType } from '@lay2/pw-core';
 
 type IndexerScript = {
-  code_hash: string;
+  codeHash: string;
   args: string;
-  hash_type: 'data' | 'type' | 'data1';
+  hashType: 'data' | 'type' | 'data1';
 };
 
 type ScriptLikeTypes = ScriptLike | CKBComponents.Script | PWScript | IndexerScript;
@@ -20,42 +20,16 @@ export class ScriptLike {
   }
 
   static isIndexerScript(script: ScriptLikeTypes): script is IndexerScript {
-    return 'code_hash' in script && 'args' in script && 'hash_type' in script;
+    return 'codeHash' in script && 'args' in script && 'hashType' in script;
   }
 
   static from(script: ScriptLikeTypes): ScriptLike {
-    if (ScriptLike.isPWScript(script) || ScriptLike.isCKBComponentScript(script) || script instanceof ScriptLike) {
-      return new ScriptLike(script.codeHash, script.args, script.hashType);
-    }
-
-    if (ScriptLike.isIndexerScript(script)) {
-      return new ScriptLike(script.code_hash, script.args, script.hash_type);
-    }
-
-    throw new Error('ScriptLike.from only supported ScriptLike | CKBComponents.Script | PWScript | IndexerScript');
+    return new ScriptLike(script.codeHash, script.args, script.hashType);
   }
 
   equals(script: ScriptLikeTypes): boolean {
     const { codeHash, args, hashType } = this;
-
-    if (ScriptLike.isPWScript(script)) {
-      return (
-        script.args === args &&
-        script.codeHash === codeHash &&
-        ((script.hashType === HashType.data && hashType === 'data') ||
-          (script.hashType === HashType.type && hashType === 'type'))
-      );
-    }
-
-    if (ScriptLike.isCKBComponentScript(script) || script instanceof ScriptLike) {
-      return codeHash === script.codeHash && args === script.args && hashType === script.hashType;
-    }
-
-    if (ScriptLike.isIndexerScript(script)) {
-      return script.code_hash === codeHash && script.args === args && script.hash_type === script.hash_type;
-    }
-
-    return false;
+    return codeHash === script.codeHash && args === script.args && hashType === script.hashType;
   }
 
   toCKBComponentScript(): CKBComponents.Script {
@@ -67,6 +41,6 @@ export class ScriptLike {
   }
 
   toIndexerScript(): IndexerScript {
-    return { code_hash: this.codeHash, args: this.args, hash_type: this.hashType };
+    return { codeHash: this.codeHash, args: this.args, hashType: this.hashType };
   }
 }
