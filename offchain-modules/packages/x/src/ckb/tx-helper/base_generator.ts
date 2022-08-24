@@ -1,4 +1,4 @@
-import { Cell, Script, TransactionWithStatus } from '@ckb-lumos/base';
+import { Cell, CellProvider, Script, TransactionWithStatus } from '@ckb-lumos/base';
 import { common } from '@ckb-lumos/common-scripts';
 import { getConfig, Config } from '@ckb-lumos/config-manager';
 import { key } from '@ckb-lumos/hd';
@@ -106,6 +106,22 @@ export class CkbTxHelper {
       fromAddress,
       capacityDiff,
     });
+    const cellProvider: CellProvider | null = txSkeleton.get('cellProvider');
+    logger.debug('cellProvider is: ', cellProvider);
+    if (cellProvider) {
+      const collector = cellProvider.collector({
+        lock: {
+          codeHash: '0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8',
+          hashType: 'type',
+          args: '0x40dcec2ef1ffc2340ea13ff4dd9671d2f9787e95',
+        },
+      });
+      const cells: Cell[] = [];
+      for await (const cell of collector.collect()) {
+        cells.push(cell);
+      }
+      logger.debug('cells are: ', cells);
+    }
     if (capacityDiff < 0) {
       txSkeleton = await common.injectCapacity(txSkeleton, [fromAddress], -capacityDiff);
     } else {
