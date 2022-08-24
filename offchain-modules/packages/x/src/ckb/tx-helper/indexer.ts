@@ -16,6 +16,54 @@ import axios from 'axios';
 import { asyncSleep } from '../../utils';
 import { logger } from '../../utils/logger';
 
+function toCamel(s) {
+  return s.replace(/([-_][a-z])/gi, ($1) => {
+    return $1.toUpperCase().replace('-', '').replace('_', '');
+  });
+}
+
+function toSnake(s) {
+  return s.replace(/([a-z][A-Z])/g, ($1) => {
+    return `${$1.charAt(0)}_${$1.charAt(1).toLowerCase()}`;
+  });
+}
+
+function deepCamel(data) {
+  return deepTransform(toCamel)(data);
+}
+
+function deepSnake(data) {
+  return deepTransform(toSnake)(data);
+}
+
+function deepTransform(transformFunction) {
+  return (data) => {
+    if (Object.prototype.toString.call(data) === '[object Array]') {
+      if (data.length === 0) {
+        return data;
+      } else {
+        return data.map((item) => deepTransform(transformFunction)(item));
+      }
+    }
+    const result = {};
+    if (Object.prototype.toString.call(data) === '[object Object]') {
+      for (const key in data) {
+        const value = data[key];
+        if (
+          Object.prototype.toString.call(value) === '[object Object]' ||
+          Object.prototype.toString.call(value) === '[object Array]'
+        ) {
+          result[transformFunction(key)] = deepTransform(transformFunction)(value);
+        } else {
+          result[transformFunction(key)] = value;
+        }
+      }
+      return result;
+    }
+    return data;
+  };
+}
+
 export enum ScriptType {
   type = 'type',
   lock = 'lock',
@@ -40,7 +88,7 @@ export interface SearchKey {
 }
 
 export interface GetLiveCellsResult {
-  last_cursor: string;
+  lastCursor: string;
   objects: IndexerCell[];
 }
 
@@ -52,8 +100,8 @@ export interface IndexerCell {
     lock: Script;
     type?: Script;
   };
-  output_data: HexString;
-  tx_index: Hexadecimal;
+  outputData: HexString;
+  txIndex: Hexadecimal;
 }
 
 export interface TerminatorResult {
@@ -72,13 +120,13 @@ export type IOType = 'input' | 'output';
 export type Bytes32 = string;
 export type GetTransactionsResult = {
   blockNumber: HexNum;
-  io_index: HexNum;
-  io_type: IOType;
+  ioIndex: HexNum;
+  ioType: IOType;
   txHash: Bytes32;
-  tx_index: HexNum;
+  txIndex: HexNum;
 };
 export interface GetTransactionsResults {
-  last_cursor: string;
+  lastCursor: string;
   objects: GetTransactionsResult[];
 }
 
@@ -94,8 +142,8 @@ export class CkbIndexer implements Indexer {
   }
 
   async tip(): Promise<Tip> {
-    const res = await this.request('getTip');
-    return res as Tip;
+    const res = await this.request('get_tip');
+    return deepCamel(res) as Tip;
   }
 
   async waitForSync(blockDifference = 0): Promise<void> {
@@ -103,7 +151,9 @@ export class CkbIndexer implements Indexer {
     logger.debug('rpcTipNumber', rpcTipNumber);
     let index = 0;
     while (true) {
-      const indexerTipNumber = parseInt((await this.tip()).blockNumber, 16);
+      const tip = await this.tip();
+      logger.debug('tip is: ', tip);
+      const indexerTipNumber = parseInt(tip.blockNumber, 16);
       logger.debug('indexerTipNumber', indexerTipNumber);
       if (indexerTipNumber + blockDifference >= rpcTipNumber) {
         return;
@@ -153,9 +203,10 @@ export class CkbIndexer implements Indexer {
             const sizeLimit = 100;
             let cursor = null;
             for (;;) {
-              const params = [searchKey, order, `0x${sizeLimit.toString(16)}`, cursor];
+              logger.debug('searchKey', searchKey);
+              const params = [deepSnake(searchKey), order, `0x${sizeLimit.toString(16)}`, cursor];
               logger.debug('getCells params', params);
-              const res = await request('getCells', params, ckbIndexerUrl);
+              const res = deepCamel(await request('get_cells', params, ckbIndexerUrl));
               const liveCells = res.objects;
               cursor = res.last_cursor;
               for (const cell of liveCells) {
@@ -277,15 +328,15 @@ $ echo '{
     let cursor: string | undefined;
     const index = 0;
     while (true) {
-      const params = [searchKey, order, `0x${sizeLimit.toString(16)}`, cursor];
-      const res: GetLiveCellsResult = await this.request('getCells', params);
+      const params = [deepSnake(searchKey), order, `0x${sizeLimit.toString(16)}`, cursor];
+      const res: GetLiveCellsResult = deepCamel(await this.request('get_cells', params));
       const liveCells = res.objects;
-      cursor = res.last_cursor;
+      cursor = res.lastCursor;
       logger.debug('liveCells', liveCells[liveCells.length - 1]);
       for (const liveCell of liveCells) {
         const cell: Cell = {
           cellOutput: liveCell.output,
-          data: liveCell.output_data,
+          data: liveCell.outputData,
           outPoint: liveCell.outPoint,
           blockNumber: liveCell.blockNumber,
         };
@@ -312,10 +363,10 @@ $ echo '{
     let infos: GetTransactionsResult[] = [];
     let cursor: string | undefined;
     for (;;) {
-      const params = [searchKey, order, `0x${sizeLimit.toString(16)}`, cursor];
-      const res: GetTransactionsResults = await this.request('getTransactions', params);
+      const params = [deepSnake(searchKey), order, `0x${sizeLimit.toString(16)}`, cursor];
+      const res: GetTransactionsResults = deepCamel(await this.request('get_transactions', params));
       const txs = res.objects;
-      cursor = res.last_cursor;
+      cursor = res.lastCursor;
       infos = infos.concat(txs);
       if (txs.length < sizeLimit) {
         break;
