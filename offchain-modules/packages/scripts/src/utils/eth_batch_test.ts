@@ -265,9 +265,9 @@ export async function prepareCkbAddresses(
 
     const toArgs = `0x${ckb.utils.blake160(toPublicKey, 'hex')}`;
     const toScript = {
-      code_hash: secp256k1Dep.codeHash,
+      codeHash: secp256k1Dep.codeHash,
       args: toArgs,
-      hash_type: secp256k1Dep.hashType,
+      hashType: secp256k1Dep.hashType,
     };
     const capacity = 600 * 100000000;
     const toScriptCell = {
@@ -283,8 +283,8 @@ export async function prepareCkbAddresses(
   const changeCellCapacity = inputCap - outputCap - 10000000n;
   outputs.push({
     lock: {
-      code_hash: fromLockscript.codeHash,
-      hash_type: fromLockscript.hashType,
+      codeHash: fromLockscript.codeHash,
+      hashType: fromLockscript.hashType,
       args: fromLockscript.args,
     },
     capacity: `0x${changeCellCapacity.toString(16)}`,
