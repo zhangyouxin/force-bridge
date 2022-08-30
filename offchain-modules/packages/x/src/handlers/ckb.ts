@@ -218,7 +218,7 @@ export class CkbHandler {
   }
 
   async getTransactions(searchKey: SearchKey): Promise<CkbTxInfo[]> {
-    const txs = lodash.uniqBy(await this.ckbIndexer.getTransactions(searchKey), 'txHash');
+    const txs = lodash.uniqBy(await this.ckbIndexer.getTransactions2(searchKey), 'txHash');
     const result: CkbTxInfo[] = [];
     for (const tx of txs) {
       const txWithStatus = await this.ckb.rpc.getTransaction(tx.txHash);

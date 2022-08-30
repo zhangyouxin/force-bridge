@@ -1,4 +1,4 @@
-import { Cell, Hexadecimal, Script } from '@ckb-lumos/base';
+import { Cell, Hexadecimal, HexNumber, HexString, OutPoint, Script } from '@ckb-lumos/base';
 import { Indexer } from '@ckb-lumos/ckb-indexer';
 
 export class CkbIndexer extends Indexer {
@@ -8,6 +8,14 @@ export class CkbIndexer extends Indexer {
     { sizeLimit = 0x100, order = Order.asc }: { sizeLimit?: number; order?: Order } = {},
   ): Promise<Cell[]> {
     const result = await super.getCells(searchKey, terminator, { sizeLimit, order });
+    return result.objects;
+  }
+
+  async getTransactions2(
+    searchKey: SearchKey,
+    { sizeLimit = 0x100, order = Order.asc }: { sizeLimit?: number; order?: Order } = {},
+  ): Promise<GetTransactionsResult[]> {
+    const result = await super.getTransactions(searchKey, { sizeLimit, order });
     return result.objects;
   }
 }
@@ -83,22 +91,22 @@ export interface SearchKey {
   };
 }
 
-// export interface GetLiveCellsResult {
-//   lastCursor: string;
-//   objects: IndexerCell[];
-// }
+export interface GetLiveCellsResult {
+  lastCursor: string;
+  objects: IndexerCell[];
+}
 
-// export interface IndexerCell {
-//   blockNumber: Hexadecimal;
-//   outPoint: OutPoint;
-//   output: {
-//     capacity: HexNumber;
-//     lock: Script;
-//     type?: Script;
-//   };
-//   outputData: HexString;
-//   txIndex: Hexadecimal;
-// }
+export interface IndexerCell {
+  blockNumber: Hexadecimal;
+  outPoint: OutPoint;
+  output: {
+    capacity: HexNumber;
+    lock: Script;
+    type?: Script;
+  };
+  outputData: HexString;
+  txIndex: Hexadecimal;
+}
 
 export interface TerminatorResult {
   stop: boolean;
@@ -107,24 +115,24 @@ export interface TerminatorResult {
 
 export declare type Terminator = (index: number, cell: Cell) => TerminatorResult;
 
-// const DefaultTerminator: Terminator = (_index, _cell) => {
-//   return { stop: false, push: true };
-// };
+const DefaultTerminator: Terminator = (_index, _cell) => {
+  return { stop: false, push: true };
+};
 
-// export type HexNum = string;
-// export type IOType = 'input' | 'output';
-// export type Bytes32 = string;
-// export type GetTransactionsResult = {
-//   blockNumber: HexNum;
-//   ioIndex: HexNum;
-//   ioType: IOType;
-//   txHash: Bytes32;
-//   txIndex: HexNum;
-// };
-// export interface GetTransactionsResults {
-//   lastCursor: string;
-//   objects: GetTransactionsResult[];
-// }
+export type HexNum = string;
+export type IOType = 'input' | 'output' | 'both';
+export type Bytes32 = string;
+export type GetTransactionsResult = {
+  blockNumber: HexNum;
+  ioIndex: HexNum;
+  ioType: IOType;
+  txHash: Bytes32;
+  txIndex: HexNum;
+};
+export interface GetTransactionsResults {
+  lastCursor: string;
+  objects: GetTransactionsResult[];
+}
 
 // export class CkbIndexer implements Indexer {
 //   uri: string;
