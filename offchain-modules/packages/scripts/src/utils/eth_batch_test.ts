@@ -5,7 +5,6 @@ import { CkbIndexer } from '@force-bridge/x/dist/ckb/tx-helper/indexer';
 import { asserts } from '@force-bridge/x/dist/errors';
 import { asyncSleep } from '@force-bridge/x/dist/utils';
 import { logger } from '@force-bridge/x/dist/utils/logger';
-import { Script } from '@lay2/pw-core';
 import CKB from '@nervosnetwork/ckb-sdk-core';
 import { AddressPrefix } from '@nervosnetwork/ckb-sdk-utils';
 import { ethers } from 'ethers';
@@ -265,11 +264,11 @@ export async function prepareCkbAddresses(
     addresses.push(ckb.utils.pubkeyToAddress(toPublicKey, { prefix: AddressPrefix.Testnet }));
 
     const toArgs = `0x${ckb.utils.blake160(toPublicKey, 'hex')}`;
-    const toScript = Script.fromRPC({
-      codeHash: secp256k1Dep.codeHash,
+    const toScript = {
+      code_hash: secp256k1Dep.codeHash,
       args: toArgs,
-      hashType: secp256k1Dep.hashType,
-    });
+      hash_type: secp256k1Dep.hashType,
+    };
     const capacity = 600 * 100000000;
     const toScriptCell = {
       lock: toScript,
@@ -283,7 +282,11 @@ export async function prepareCkbAddresses(
   const outputCap = outputs.map((cell) => BigInt(cell.capacity)).reduce((a, b) => a + b);
   const changeCellCapacity = inputCap - outputCap - 10000000n;
   outputs.push({
-    lock: Script.fromRPC(fromLockscript),
+    lock: {
+      code_hash: fromLockscript.codeHash,
+      hash_type: fromLockscript.hashType,
+      args: fromLockscript.args,
+    },
     capacity: `0x${changeCellCapacity.toString(16)}`,
   });
   outputsData.push('0x');
