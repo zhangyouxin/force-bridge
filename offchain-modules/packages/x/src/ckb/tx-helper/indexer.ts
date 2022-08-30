@@ -2,6 +2,9 @@ import { Cell, Hexadecimal, HexNumber, HexString, OutPoint, Script } from '@ckb-
 import { Indexer } from '@ckb-lumos/ckb-indexer';
 
 export class CkbIndexer extends Indexer {
+  constructor(ckbRpcUrl: string, ckbIndexerUrl: string) {
+    super(ckbIndexerUrl, ckbRpcUrl);
+  }
   async getCells2(
     searchKey: SearchKey,
     terminator?: Terminator,
