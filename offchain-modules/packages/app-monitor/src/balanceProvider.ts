@@ -66,7 +66,7 @@ export class BalanceProvider {
       script: typescript,
       scriptType: ScriptType.type,
     };
-    const cells = await this.ckbIndexer.getCells(searchKey, (_index, _cell) => ({ stop: false, push: true }), {
+    const cells = await this.ckbIndexer.getCells2(searchKey, (_index, _cell) => ({ stop: false, push: true }), {
       sizeLimit: 0x1000,
       order: Order.asc,
     });

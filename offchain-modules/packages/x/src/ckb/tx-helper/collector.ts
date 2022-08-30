@@ -29,7 +29,7 @@ export class IndexerCollector extends Collector {
       script: lockscript,
       scriptType: ScriptType.lock,
     };
-    const cells = await this.indexer.getCells(searchKey, terminator);
+    const cells = await this.indexer.getCells2(searchKey, terminator);
     return cells;
   }
 
@@ -45,7 +45,7 @@ export class IndexerCollector extends Collector {
         return { stop: false, push: true };
       }
     };
-    const cells = await this.indexer.getCells(searchKey, terminator);
+    const cells = await this.indexer.getCells2(searchKey, terminator);
     return cells;
   }
 
@@ -54,7 +54,7 @@ export class IndexerCollector extends Collector {
       script: lock,
       scriptType: ScriptType.lock,
     };
-    const cells = await this.indexer.getCells(searchKey);
+    const cells = await this.indexer.getCells2(searchKey);
     let balance = 0n;
     cells.forEach((cell) => {
       balance += BigInt(cell.cellOutput.capacity);
@@ -70,7 +70,7 @@ export class IndexerCollector extends Collector {
         script: sudtType,
       },
     };
-    const cells = await this.indexer.getCells(searchKey);
+    const cells = await this.indexer.getCells2(searchKey);
     let balance = 0n;
     cells.forEach((cell) => {
       logger.debug('cell.data:', cell.data);
@@ -106,7 +106,7 @@ export class IndexerCollector extends Collector {
       script: lockscript,
       scriptType: ScriptType.lock,
     };
-    const cells = await this.indexer.getCells(searchKey, terminator);
+    const cells = await this.indexer.getCells2(searchKey, terminator);
     return cells;
   }
 }

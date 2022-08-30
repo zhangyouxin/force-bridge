@@ -1,5 +1,4 @@
 import { Cell, CellProvider, Script, TransactionWithStatus } from '@ckb-lumos/base';
-import { Indexer } from '@ckb-lumos/ckb-indexer';
 import { common } from '@ckb-lumos/common-scripts';
 import { getConfig, Config } from '@ckb-lumos/config-manager';
 import { key } from '@ckb-lumos/hd';
@@ -9,15 +8,14 @@ import TransactionManager from '@ckb-lumos/transaction-manager';
 import { asyncSleep, transactionSkeletonToJSON } from '../../utils';
 import { logger } from '../../utils/logger';
 import { IndexerCollector } from './collector';
-import { ScriptType, Terminator } from './indexer';
+import { ScriptType, Terminator, CkbIndexer } from './indexer';
 
 // you have to initialize lumos config before use this generator
 export class CkbTxHelper {
   ckbRpcUrl: string;
   ckbIndexerUrl: string;
   collector: IndexerCollector;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  indexer: any;
+  indexer: CkbIndexer;
   ckb: RPC;
   lumosConfig: Config;
   transactionManager: TransactionManager;
@@ -26,7 +24,7 @@ export class CkbTxHelper {
     this.ckbRpcUrl = ckbRpcUrl;
     this.ckbIndexerUrl = ckbIndexerUrl;
     // this.indexer = new CkbIndexer(ckbRpcUrl, ckbIndexerUrl);
-    this.indexer = new Indexer(ckbIndexerUrl, ckbRpcUrl);
+    this.indexer = new CkbIndexer(ckbIndexerUrl, ckbRpcUrl);
     this.ckb = new RPC(ckbRpcUrl);
     this.collector = new IndexerCollector(this.indexer);
     this.lumosConfig = getConfig();
@@ -58,11 +56,9 @@ export class CkbTxHelper {
         return { stop: false, push: true };
       }
     };
-    // const fromCells = await this.indexer.getCells(searchKey, terminator);
-    // TODO
-    const fromCells = await this.indexer.getCells(searchKey, terminator);
-    logger.debug(`fromCells: ${JSON.stringify(fromCells.objects)}`);
-    return fromCells.objects;
+    const fromCells = await this.indexer.getCells2(searchKey, terminator);
+    logger.debug(`fromCells: ${JSON.stringify(fromCells)}`);
+    return fromCells;
   }
 
   async calculateCapacityDiff(txSkeleton: TransactionSkeletonType): Promise<bigint> {

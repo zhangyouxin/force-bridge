@@ -664,7 +664,7 @@ export class CkbHandler {
         script: bridgeCellLockscript,
         scriptType: ScriptType.lock,
       };
-      const bridgeCells = await this.ckbIndexer.getCells(searchKey);
+      const bridgeCells = await this.ckbIndexer.getCells2(searchKey);
       if (bridgeCells.length == 0) {
         newTokens.push(record);
       }

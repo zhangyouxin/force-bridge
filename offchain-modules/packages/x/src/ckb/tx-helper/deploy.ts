@@ -354,9 +354,7 @@ export class CkbDeployManager extends CkbTxHelper {
         script: typeidScript,
         scriptType: ScriptType.type,
       };
-      // const typeidInputs = (await this.indexer.getCells(searchKey));
-      // TODO
-      const typeidInputs = (await this.indexer.getCells(searchKey)).objects;
+      const typeidInputs = await this.indexer.getCells2(searchKey);
       asserts(typeidInputs.length === 1);
       txSkeleton = txSkeleton.update('inputs', (inputs) => {
         return inputs.concat(typeidInputs);
