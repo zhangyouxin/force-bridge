@@ -1,4 +1,5 @@
 import { Cell, CellProvider, Script, TransactionWithStatus } from '@ckb-lumos/base';
+import { Indexer } from '@ckb-lumos/ckb-indexer';
 import { common } from '@ckb-lumos/common-scripts';
 import { getConfig, Config } from '@ckb-lumos/config-manager';
 import { key } from '@ckb-lumos/hd';
@@ -8,14 +9,15 @@ import TransactionManager from '@ckb-lumos/transaction-manager';
 import { asyncSleep, transactionSkeletonToJSON } from '../../utils';
 import { logger } from '../../utils/logger';
 import { IndexerCollector } from './collector';
-import { CkbIndexer, ScriptType, Terminator } from './indexer';
+import { ScriptType, Terminator } from './indexer';
 
 // you have to initialize lumos config before use this generator
 export class CkbTxHelper {
   ckbRpcUrl: string;
   ckbIndexerUrl: string;
   collector: IndexerCollector;
-  indexer: CkbIndexer;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  indexer: any;
   ckb: RPC;
   lumosConfig: Config;
   transactionManager: TransactionManager;
@@ -23,7 +25,8 @@ export class CkbTxHelper {
   constructor(ckbRpcUrl: string, ckbIndexerUrl: string) {
     this.ckbRpcUrl = ckbRpcUrl;
     this.ckbIndexerUrl = ckbIndexerUrl;
-    this.indexer = new CkbIndexer(ckbRpcUrl, ckbIndexerUrl);
+    // this.indexer = new CkbIndexer(ckbRpcUrl, ckbIndexerUrl);
+    this.indexer = new Indexer(ckbIndexerUrl, ckbRpcUrl);
     this.ckb = new RPC(ckbRpcUrl);
     this.collector = new IndexerCollector(this.indexer);
     this.lumosConfig = getConfig();
@@ -55,7 +58,9 @@ export class CkbTxHelper {
         return { stop: false, push: true };
       }
     };
-    const fromCells = await this.indexer.getCells(searchKey, terminator);
+    // const fromCells = await this.indexer.getCells(searchKey, terminator);
+    // TODO
+    const fromCells = await this.indexer.getCells(searchKey, terminator).objects;
     logger.debug(`fromCells: ${JSON.stringify(fromCells)}`);
     return fromCells;
   }
