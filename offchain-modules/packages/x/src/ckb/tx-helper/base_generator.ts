@@ -60,9 +60,9 @@ export class CkbTxHelper {
     };
     // const fromCells = await this.indexer.getCells(searchKey, terminator);
     // TODO
-    const fromCells = await this.indexer.getCells(searchKey, terminator).objects;
-    logger.debug(`fromCells: ${JSON.stringify(fromCells)}`);
-    return fromCells;
+    const fromCells = await this.indexer.getCells(searchKey, terminator);
+    logger.debug(`fromCells: ${JSON.stringify(fromCells.objects)}`);
+    return fromCells.objects;
   }
 
   async calculateCapacityDiff(txSkeleton: TransactionSkeletonType): Promise<bigint> {

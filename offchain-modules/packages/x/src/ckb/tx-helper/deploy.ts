@@ -110,6 +110,8 @@ export class CkbDeployManager extends CkbTxHelper {
     // get from cells
     const fromAddress = generateSecp256k1Blake160Address(key.privateKeyToBlake160(privateKey));
     const fromLockscript = parseAddress(fromAddress);
+    // const fromCells = await this.getFromCells(fromLockscript);
+    // TODO
     const fromCells = await this.getFromCells(fromLockscript);
     if (fromCells.length === 0) {
       throw new Error('no available cells found');
@@ -352,7 +354,9 @@ export class CkbDeployManager extends CkbTxHelper {
         script: typeidScript,
         scriptType: ScriptType.type,
       };
-      const typeidInputs = await this.indexer.getCells(searchKey);
+      // const typeidInputs = (await this.indexer.getCells(searchKey));
+      // TODO
+      const typeidInputs = (await this.indexer.getCells(searchKey)).objects;
       asserts(typeidInputs.length === 1);
       txSkeleton = txSkeleton.update('inputs', (inputs) => {
         return inputs.concat(typeidInputs);
