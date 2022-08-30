@@ -1,9 +1,14 @@
 import { Cell, Hexadecimal, HexNumber, HexString, OutPoint, Script } from '@ckb-lumos/base';
 import { Indexer } from '@ckb-lumos/ckb-indexer';
+import { RPC } from '@ckb-lumos/rpc';
+import { asyncSleep } from '../../utils';
+import { logger } from '../../utils/logger';
 
 export class CkbIndexer extends Indexer {
+  ckbRpc: RPC;
   constructor(ckbRpcUrl: string, ckbIndexerUrl: string) {
     super(ckbIndexerUrl, ckbRpcUrl);
+    this.ckbRpc = new RPC(ckbRpcUrl);
   }
   async getCells2(
     searchKey: SearchKey,
@@ -20,6 +25,23 @@ export class CkbIndexer extends Indexer {
   ): Promise<GetTransactionsResult[]> {
     const result = await super.getTransactions(searchKey, { sizeLimit, order });
     return result.objects;
+  }
+
+  override async waitForSync(blockDifference = 0): Promise<void> {
+    const rpcTipNumber = parseInt((await this.ckbRpc.getTipHeader()).number, 16);
+    logger.debug('rpcTipNumber', rpcTipNumber);
+    let index = 0;
+    while (true) {
+      const tip = await this.tip();
+      logger.debug('tip is: ', tip);
+      const indexerTipNumber = parseInt(tip.blockNumber, 16);
+      logger.debug('indexerTipNumber', indexerTipNumber);
+      if (indexerTipNumber + blockDifference >= rpcTipNumber) {
+        return;
+      }
+      logger.debug(`wait until indexer sync. index: ${index++}`);
+      await asyncSleep(1000);
+    }
   }
 }
 
