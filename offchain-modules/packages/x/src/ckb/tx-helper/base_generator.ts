@@ -1,4 +1,4 @@
-import { Cell, Script, TransactionWithStatus } from '@ckb-lumos/base';
+import { Cell, CellProvider, Script, TransactionWithStatus } from '@ckb-lumos/base';
 import { common } from '@ckb-lumos/common-scripts';
 import { getConfig, Config } from '@ckb-lumos/config-manager';
 import { key } from '@ckb-lumos/hd';
@@ -8,7 +8,7 @@ import TransactionManager from '@ckb-lumos/transaction-manager';
 import { asyncSleep, transactionSkeletonToJSON } from '../../utils';
 import { logger } from '../../utils/logger';
 import { IndexerCollector } from './collector';
-import { CkbIndexer, ScriptType, Terminator } from './indexer';
+import { ScriptType, Terminator, CkbIndexer } from './indexer';
 
 // you have to initialize lumos config before use this generator
 export class CkbTxHelper {
@@ -35,8 +35,8 @@ export class CkbTxHelper {
     const publicKey = key.privateToPublic(privateKey);
     const blake160 = key.publicKeyToBlake160(publicKey);
     const script = {
-      code_hash: this.lumosConfig.SCRIPTS.SECP256K1_BLAKE160!.CODE_HASH,
-      hash_type: this.lumosConfig.SCRIPTS.SECP256K1_BLAKE160!.HASH_TYPE,
+      codeHash: this.lumosConfig.SCRIPTS.SECP256K1_BLAKE160!.CODE_HASH,
+      hashType: this.lumosConfig.SCRIPTS.SECP256K1_BLAKE160!.HASH_TYPE,
       args: blake160,
     };
     return script;
@@ -45,17 +45,17 @@ export class CkbTxHelper {
   async getFromCells(lockscript: Script): Promise<Cell[]> {
     const searchKey = {
       script: lockscript,
-      script_type: ScriptType.lock,
+      scriptType: ScriptType.lock,
     };
     const terminator: Terminator = (index, c) => {
       const cell = c;
-      if (cell.data.length / 2 - 1 > 0 || cell.cell_output.type) {
+      if (cell.data.length / 2 - 1 > 0 || cell.cellOutput.type) {
         return { stop: false, push: false };
       } else {
         return { stop: false, push: true };
       }
     };
-    const fromCells = await this.indexer.getCells(searchKey, terminator);
+    const fromCells = await this.indexer.getCells2(searchKey, terminator);
     logger.debug(`fromCells: ${JSON.stringify(fromCells)}`);
     return fromCells;
   }
@@ -63,11 +63,11 @@ export class CkbTxHelper {
   async calculateCapacityDiff(txSkeleton: TransactionSkeletonType): Promise<bigint> {
     const inputCapacity = txSkeleton
       .get('inputs')
-      .map((c) => BigInt(c.cell_output.capacity))
+      .map((c) => BigInt(c.cellOutput.capacity))
       .reduce((a, b) => a + b, 0n);
     const outputCapacity = txSkeleton
       .get('outputs')
-      .map((c) => BigInt(c.cell_output.capacity))
+      .map((c) => BigInt(c.cellOutput.capacity))
       .reduce((a, b) => a + b, 0n);
     return inputCapacity - outputCapacity;
   }
@@ -90,14 +90,14 @@ export class CkbTxHelper {
     // add change output
     const fromLockscript = parseAddress(fromAddress);
     const changeOutput: Cell = {
-      cell_output: {
+      cellOutput: {
         capacity: '0x0',
         lock: fromLockscript,
       },
       data: '0x',
     };
     const minimalChangeCellCapacity = minimalCellCapacity(changeOutput);
-    changeOutput.cell_output.capacity = `0x${minimalChangeCellCapacity.toString(16)}`;
+    changeOutput.cellOutput.capacity = `0x${minimalChangeCellCapacity.toString(16)}`;
     txSkeleton = txSkeleton.update('outputs', (outputs) => {
       return outputs.push(changeOutput);
     });
@@ -106,13 +106,29 @@ export class CkbTxHelper {
       fromAddress,
       capacityDiff,
     });
+    const cellProvider: CellProvider | null = txSkeleton.get('cellProvider');
+    logger.debug('cellProvider is: ', cellProvider);
+    if (cellProvider) {
+      const collector = cellProvider.collector({
+        lock: {
+          codeHash: '0x9bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce8',
+          hashType: 'type',
+          args: '0x40dcec2ef1ffc2340ea13ff4dd9671d2f9787e95',
+        },
+      });
+      const cells: Cell[] = [];
+      for await (const cell of collector.collect()) {
+        cells.push(cell);
+      }
+      logger.debug('cells are: ', cells);
+    }
     if (capacityDiff < 0) {
       txSkeleton = await common.injectCapacity(txSkeleton, [fromAddress], -capacityDiff);
     } else {
       txSkeleton.update('outputs', (outputs) => {
-        const before = BigInt(changeOutput.cell_output.capacity);
+        const before = BigInt(changeOutput.cellOutput.capacity);
         const after = before + capacityDiff;
-        changeOutput.cell_output.capacity = `0x${after.toString(16)}`;
+        changeOutput.cellOutput.capacity = `0x${after.toString(16)}`;
         return outputs.set(outputs.size - 1, changeOutput);
       });
     }
@@ -128,10 +144,10 @@ export class CkbTxHelper {
   async waitUntilCommitted(txHash: string, timeout = 120): Promise<TransactionWithStatus | null> {
     let waitTime = 0;
     for (;;) {
-      const txStatus = await this.ckb.get_transaction(txHash);
+      const txStatus = await this.ckb.getTransaction(txHash);
       if (txStatus !== null) {
-        logger.debug(`tx ${txHash}, status: ${txStatus.tx_status.status}, index: ${waitTime}`);
-        if (txStatus.tx_status.status === 'committed') {
+        logger.debug(`tx ${txHash}, status: ${txStatus.txStatus.status}, index: ${waitTime}`);
+        if (txStatus.txStatus.status === 'committed') {
           return txStatus;
         }
       } else {

@@ -160,11 +160,11 @@ export class BTCChain {
     const unlockVout: unknown[] = [];
     let unlockData = '';
     records.map((r) => {
-      let tx_hash = r.ckbTxHash;
-      if (tx_hash.startsWith('0x')) {
-        tx_hash = tx_hash.substring(2);
+      let txHash = r.ckbTxHash;
+      if (txHash.startsWith('0x')) {
+        txHash = txHash.substring(2);
       }
-      unlockData = unlockData + tx_hash;
+      unlockData = unlockData + txHash;
       VinNeedAmount = VinNeedAmount + BigInt(r.amount);
       unlockVout.push({ address: r.recipientAddress, satoshis: Number(r.amount) });
     });

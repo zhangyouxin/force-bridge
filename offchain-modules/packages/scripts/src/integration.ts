@@ -377,7 +377,7 @@ async function main() {
     MULTISIG_NUMBER + EXTRA_MULTISIG_NUMBER,
   );
   const command = `FORCE_BRIDGE_KEYSTORE_PASSWORD=${FORCE_BRIDGE_KEYSTORE_PASSWORD} ${forcecli} collector -cfg ${configPath}/collector/force_bridge.json`;
-  await asyncSleep(60000);
+  await asyncSleep(180000);
   const collectorProcess = shelljs.exec(command, { async: true });
   await ethBatchTest(
     ETH_TEST_PRIVKEY,

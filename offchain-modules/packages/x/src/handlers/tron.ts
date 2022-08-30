@@ -10,7 +10,7 @@ import { logger } from '../utils/logger';
 import { getAssetTypeByAsset } from '../xchain/tron/utils';
 
 type TronLockEvent = {
-  tx_hash: string;
+  txHash: string;
   index: number;
   sender: string;
   asset: string;
@@ -189,7 +189,7 @@ export class TronHandler {
       for (const data of txs.data) {
         const asset_data = data.raw_data.contract[0].parameter.value;
         const event = {
-          tx_hash: data.txID,
+          txHash: data.txID,
           index: 0,
           sender: this.tronWeb.address.fromHex(asset_data.owner_address),
           asset: asset_data.asset_name ? asset_data.asset_name : 'trx',
@@ -230,7 +230,7 @@ export class TronHandler {
         }
         const tx = await this.tronWeb.trx.getTransaction(data.transaction_id);
         const event = {
-          tx_hash: data.transaction_id,
+          txHash: data.transaction_id,
           index: 0,
           sender: data.from,
           asset: this.tronWeb.address.fromHex(data.token_info).address,
@@ -257,7 +257,7 @@ export class TronHandler {
   private transferEventToCkbMint(event: TronLockEvent) {
     const { ckbRecipient, sudtExtraData } = this.analyzeMemo(event.memo);
     return {
-      id: event.tx_hash.concat('_').concat(event.index.toString()),
+      id: event.txHash.concat('_').concat(event.index.toString()),
       chain: ChainType.TRON,
       asset: event.asset,
       amount: event.amount,
@@ -268,7 +268,7 @@ export class TronHandler {
 
   private transferEventToTronLock(event: TronLockEvent): ITronLock {
     const tronLock: ITronLock = {
-      txHash: event.tx_hash,
+      txHash: event.txHash,
       txIndex: 0,
       sender: event.sender,
       asset: event.asset,

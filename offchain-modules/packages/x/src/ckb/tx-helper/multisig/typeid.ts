@@ -1,5 +1,4 @@
-import { core, HashType, utils } from '@ckb-lumos/base';
-import { normalizers } from 'ckb-js-toolkit';
+import { HashType, utils, blockchain } from '@ckb-lumos/base';
 
 function toArrayBuffer(buf) {
   const ab = new ArrayBuffer(buf.length);
@@ -18,7 +17,7 @@ function toBigUInt64LE(num) {
 }
 
 function generateTypeID(input, outputIndex) {
-  const s = core.SerializeCellInput(normalizers.NormalizeCellInput(input));
+  const s = blockchain.CellInput.pack(input);
   const i = toBigUInt64LE(outputIndex);
   const ckbHasher = new utils.CKBHasher();
   ckbHasher.update(s);
@@ -29,8 +28,8 @@ function generateTypeID(input, outputIndex) {
 export function generateTypeIDScript(input, outputIndex) {
   const args = generateTypeID(input, outputIndex);
   return {
-    code_hash: '0x00000000000000000000000000000000000000000000000000545950455f4944',
-    hash_type: 'type' as HashType,
+    codeHash: '0x00000000000000000000000000000000000000000000000000545950455f4944',
+    hashType: 'type' as HashType,
     args,
   };
 }

@@ -18,18 +18,18 @@ export class IndexerCollector extends Collector {
       if (accCapacity >= needCapacity) {
         return { stop: true, push: false };
       }
-      if (cell.data.length / 2 - 1 > 0 || cell.cell_output.type) {
+      if (cell.data.length / 2 - 1 > 0 || cell.cellOutput.type) {
         return { stop: false, push: false };
       } else {
-        accCapacity += BigInt(cell.cell_output.capacity);
+        accCapacity += BigInt(cell.cellOutput.capacity);
         return { stop: false, push: true };
       }
     };
     const searchKey = {
       script: lockscript,
-      script_type: ScriptType.lock,
+      scriptType: ScriptType.lock,
     };
-    const cells = await this.indexer.getCells(searchKey, terminator);
+    const cells = await this.indexer.getCells2(searchKey, terminator);
     return cells;
   }
 
@@ -45,19 +45,19 @@ export class IndexerCollector extends Collector {
         return { stop: false, push: true };
       }
     };
-    const cells = await this.indexer.getCells(searchKey, terminator);
+    const cells = await this.indexer.getCells2(searchKey, terminator);
     return cells;
   }
 
   async getBalance(lock: Script): Promise<bigint> {
     const searchKey = {
       script: lock,
-      script_type: ScriptType.lock,
+      scriptType: ScriptType.lock,
     };
-    const cells = await this.indexer.getCells(searchKey);
+    const cells = await this.indexer.getCells2(searchKey);
     let balance = 0n;
     cells.forEach((cell) => {
-      balance += BigInt(cell.cell_output.capacity);
+      balance += BigInt(cell.cellOutput.capacity);
     });
     return balance;
   }
@@ -65,12 +65,12 @@ export class IndexerCollector extends Collector {
   async getSUDTBalance(sudtType: Script, userLock: Script): Promise<bigint> {
     const searchKey = {
       script: userLock,
-      script_type: ScriptType.lock,
+      scriptType: ScriptType.lock,
       filter: {
         script: sudtType,
       },
     };
-    const cells = await this.indexer.getCells(searchKey);
+    const cells = await this.indexer.getCells2(searchKey);
     let balance = 0n;
     cells.forEach((cell) => {
       logger.debug('cell.data:', cell.data);
@@ -91,22 +91,22 @@ export class IndexerCollector extends Collector {
       if (accCapacity >= needCapacity) {
         return { stop: true, push: false };
       }
-      if (cell.cell_output.type && cell.cell_output.type.code_hash === recipientTypeCodeHash) {
-        accCapacity += BigInt(cell.cell_output.capacity);
+      if (cell.cellOutput.type && cell.cellOutput.type.codeHash === recipientTypeCodeHash) {
+        accCapacity += BigInt(cell.cellOutput.capacity);
         return { stop: false, push: true };
       }
-      if (cell.data.length / 2 - 1 > 0 || cell.cell_output.type !== undefined) {
+      if (cell.data.length / 2 - 1 > 0 || cell.cellOutput.type !== undefined) {
         return { stop: false, push: false };
       } else {
-        accCapacity += BigInt(cell.cell_output.capacity);
+        accCapacity += BigInt(cell.cellOutput.capacity);
         return { stop: false, push: true };
       }
     };
     const searchKey = {
       script: lockscript,
-      script_type: ScriptType.lock,
+      scriptType: ScriptType.lock,
     };
-    const cells = await this.indexer.getCells(searchKey, terminator);
+    const cells = await this.indexer.getCells2(searchKey, terminator);
     return cells;
   }
 }

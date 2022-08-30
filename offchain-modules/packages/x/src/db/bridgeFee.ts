@@ -17,7 +17,7 @@ export class BridgeFeeDB {
       .getRepository(WithdrawedBridgeFee)
       .createQueryBuilder()
       .delete()
-      .where('block_number > :blockNumber', { blockNumber: confirmedBlockHeight })
+      .where('blockNumber > :blockNumber', { blockNumber: confirmedBlockHeight })
       .execute();
   }
 

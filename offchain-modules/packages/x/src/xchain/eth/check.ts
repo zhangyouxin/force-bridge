@@ -26,8 +26,8 @@ export function checkLock(amount: string, token: string, recipient: string, sudt
     const sudtExtraDataLen = sudtExtraData.length / 2 - 1;
     // - capacity size: 8
     // - sudt typescript size
-    //    - code_hash: 32
-    //    - hash_type: 1
+    //    - codeHash: 32
+    //    - hashType: 1
     //    - args: 32
     // - sude amount size: 16
     const sudtSizeLimit = ForceBridgeCore.config.ckb.sudtSize;

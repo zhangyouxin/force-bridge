@@ -98,8 +98,8 @@ export class BridgeMetricSingleton {
     this.relayErrorLogNum.inc(1);
   }
 
-  public addBridgeTxMetrics(tx_type: txType, tx_status: txStatus): void {
-    this.relayBridgeTxNum.labels({ tx_type: tx_type, status: tx_status }).inc(1);
+  public addBridgeTxMetrics(tx_type: txType, txStatus: txStatus): void {
+    this.relayBridgeTxNum.labels({ tx_type: tx_type, status: txStatus }).inc(1);
   }
 
   public addBridgeTokenMetrics(tx_type: txType, tokens: txTokenInfo[]): void {

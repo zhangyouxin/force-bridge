@@ -31,7 +31,7 @@ export class CkbDb {
   }
 
   async getCkbLatestHeight(): Promise<number> {
-    const rawRes = await this.connection.manager.query('select max(block_number) as max_block_number from ckb_burn');
+    const rawRes = await this.connection.manager.query('select max(blockNumber) as max_block_number from ckb_burn');
     return rawRes[0].max_block_number || ForceBridgeCore.config.ckb.startBlockHeight;
   }
 

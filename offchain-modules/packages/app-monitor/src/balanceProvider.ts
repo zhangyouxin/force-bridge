@@ -58,21 +58,21 @@ export class BalanceProvider {
   async ckbSudtBalance(tokenAddress: string, name: string): Promise<bigint> {
     const typescriptLike = new EthAsset(tokenAddress, this.ownerTypeHash).toTypeScript();
     const typescript = {
-      code_hash: typescriptLike.codeHash,
-      hash_type: typescriptLike.hashType,
+      codeHash: typescriptLike.codeHash,
+      hashType: typescriptLike.hashType,
       args: typescriptLike.args,
     };
     const searchKey: SearchKey = {
       script: typescript,
-      script_type: ScriptType.type,
+      scriptType: ScriptType.type,
     };
-    const cells = await this.ckbIndexer.getCells(searchKey, (_index, _cell) => ({ stop: false, push: true }), {
+    const cells = await this.ckbIndexer.getCells2(searchKey, (_index, _cell) => ({ stop: false, push: true }), {
       sizeLimit: 0x1000,
       order: Order.asc,
     });
     const balance = cells.map((cell) => utils.readBigUInt128LE(cell.data)).reduce((b, b0) => b + b0, BigInt(0));
     logger.info(
-      `ckb get_cells name: ${name} token: ${tokenAddress}, typescript: ${JSON.stringify(
+      `ckb getCells name: ${name} token: ${tokenAddress}, typescript: ${JSON.stringify(
         typescript,
       )}, typescriptHash: ${utils.computeScriptHash(typescript)} cells.length: ${cells.length}, balance: ${balance}`,
     );
