@@ -23,8 +23,7 @@ export class CkbTxHelper {
   constructor(ckbRpcUrl: string, ckbIndexerUrl: string) {
     this.ckbRpcUrl = ckbRpcUrl;
     this.ckbIndexerUrl = ckbIndexerUrl;
-    // this.indexer = new CkbIndexer(ckbRpcUrl, ckbIndexerUrl);
-    this.indexer = new CkbIndexer(ckbIndexerUrl, ckbRpcUrl);
+    this.indexer = new CkbIndexer(ckbRpcUrl, ckbIndexerUrl);
     this.ckb = new RPC(ckbRpcUrl);
     this.collector = new IndexerCollector(this.indexer);
     this.lumosConfig = getConfig();
