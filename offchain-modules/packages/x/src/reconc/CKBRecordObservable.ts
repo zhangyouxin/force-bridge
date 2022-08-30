@@ -62,11 +62,11 @@ export class CKBRecordObservable {
       scriptType: 'lock',
     };
 
-    const observable = from(indexer.getTransactions({ searchKey })).pipe(
-      expand((res) => indexer.getTransactions({ searchKey, cursor: res.last_cursor })),
+    const observable = from(indexer.getTransactions2({ searchKey })).pipe(
+      expand((res) => indexer.getTransactions2({ searchKey, cursor: res.lastCursor })),
       takeWhile((res) => res.objects.length > 0),
       mergeMap((res) => res.objects),
-      rxFilter((getTxResult: Indexer.GetTransactionsResult) => getTxResult.io_type === 'output'),
+      rxFilter((getTxResult: Indexer.GetTransactionsResult) => getTxResult.ioType === 'output'),
       distinct((res) => res.txHash),
       mergeMap(async (getTxResult) => {
         const tx = await rpc.getTransaction(getTxResult.txHash);
@@ -154,7 +154,7 @@ export class CKBRecordObservable {
       () =>
       (txs$: Observable<Indexer.IndexerIterableResult<Indexer.GetTransactionsResult>>): Observable<CkbBurnRecord> => {
         return txs$.pipe(
-          mergeMap((txs) => txs.objects.filter((indexerTx) => indexerTx.io_type === 'output')),
+          mergeMap((txs) => txs.objects.filter((indexerTx) => indexerTx.ioType === 'output')),
           mergeMap((tx) => rpc.getTransaction(tx.txHash), 20),
           map((tx) => {
             const recipientCellData = new RecipientCellData(fromHexString(tx.transaction.outputsData[0]).buffer);
@@ -204,8 +204,8 @@ export class CKBRecordObservable {
         );
       };
 
-    return from(indexer.getTransactions({ searchKey })).pipe(
-      expand((tx) => indexer.getTransactions({ searchKey, cursor: tx.last_cursor })),
+    return from(indexer.getTransactions2({ searchKey })).pipe(
+      expand((tx) => indexer.getTransactions2({ searchKey, cursor: tx.lastCursor })),
       takeWhile((tx) => tx.objects.length > 0),
       indexerTx2FromRecord(),
     );
